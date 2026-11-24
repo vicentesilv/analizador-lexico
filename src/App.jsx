@@ -1,8 +1,6 @@
-import { LayoutGeneral } from './assets/componentesGenerales/Layout/LayoutGeneral'
-import { ContenedorVistaTabla } from './assets/componentesGenerales/Layout/ContenedorVistaTabla'
-import { ContenedorMediano } from './assets/componentesGenerales/Genericos/Contenedores'
-import { H1Generico, TxtGenerico } from './assets/componentesGenerales/Genericos/Textos'
+import { useState } from 'react'
 import prospectos from './assets/Data.json'
+import filtrosTexto from './assets/filtros.txt?raw'
 import './App.css'
 
 function formatearFecha(fecha) {
@@ -13,84 +11,119 @@ function formatearFecha(fecha) {
   }).format(new Date(fecha))
 }
 
+const columnas = [
+  { field: 'folio', headerName: 'Folio', renderCell: ({ value }) => <code>{value}</code> },
+  { field: 'cliente', headerName: 'Cliente', className: 'field-name' },
+  { field: 'telefono', headerName: 'Contacto' },
+  { field: 'canal', headerName: 'Canal' },
+  {
+    field: 'mensaje',
+    headerName: 'Mensaje',
+    className: 'message-cell',
+    renderCell: ({ value }) => <span title={value}>{value}</span>,
+  },
+  {
+    field: 'creadoPor',
+    headerName: 'Responsable',
+    renderCell: ({ value }) => (
+      <>
+        <span className="responsible">{value.nombres}</span>
+        <small>{value.correo}</small>
+      </>
+    ),
+  },
+  { field: 'actualizado', headerName: 'Actualizado', renderCell: ({ value }) => formatearFecha(value) },
+  {
+    field: 'lead',
+    headerName: 'Lead',
+    renderCell: ({ value }) => (
+      <span className={`state ${Number(value) > 0 ? 'state-lead' : 'state-neutral'}`}>
+        {typeof value === 'number' ? `${value} puntos` : value ? 'Sí' : 'No'}
+      </span>
+    ),
+  },
+  {
+    field: 'estadoLogico',
+    headerName: 'Estado',
+    renderCell: ({ value }) => (
+      <span className={`state ${value ? 'state-active' : 'state-inactive'}`}>{value ? 'Activo' : 'Inactivo'}</span>
+    ),
+  },
+]
+
 function App() {
-  const activos = prospectos.filter((prospecto) => prospecto.estadoLogico).length
-  const canales = new Set(prospectos.map((prospecto) => prospecto.canal)).size
+  const [datos, setDatos] = useState(prospectos)
+  const [resultado, setResultado] = useState(null)
+
+  const normalizar = (texto) => texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+  const analizarMensajes = () => {
+    const palabrasClave = filtrosTexto
+      .split('\n')
+      .map((filtro) => normalizar(filtro.trim()))
+      .filter(Boolean)
+
+    let coincidencias = 0
+    const datosAnalizados = datos.map((prospecto) => {
+      const mensaje = normalizar(prospecto.mensaje || '')
+      const coincidenciasMensaje = palabrasClave.filter((palabra) => mensaje.includes(palabra)).length
+      coincidencias += coincidenciasMensaje
+      return { ...prospecto, lead: coincidenciasMensaje * 10 }
+    })
+
+    setDatos(datosAnalizados)
+    setResultado(coincidencias)
+  }
 
   return (
-    <LayoutGeneral>
-      <header className="app-header">
-        <div>
-          <span className="app-kicker">Componentes generales</span>
-          <H1Generico margin="4px 0 0">Prospectos</H1Generico>
-        </div>
-        <span className="status"><i /> Datos cargados</span>
-      </header>
-
+    <div className="app-layout">
       <main className="app-main">
-        <ContenedorMediano>
-          <section className="record-summary" aria-label="Resumen de prospectos">
-            <div><span>Total</span><strong>{prospectos.length} prospectos</strong></div>
-            <div><span>Activos</span><strong className="active">{activos}</strong></div>
-            <div><span>Inactivos</span><strong className="inactive">{prospectos.length - activos}</strong></div>
-            <div><span>Canales</span><strong>{canales}</strong></div>
-          </section>
-
-          <ContenedorVistaTabla className="table-view">
+        <div className="content-container">
+          <section className="table-view">
             <div className="panel-header">
-              <div>
-                <TxtGenerico size="20px">Listado de prospectos</TxtGenerico>
-                <span>Información obtenida desde Data.json</span>
+              <div className="title-group">
+                <h1>Prospectos</h1>
+                {resultado !== null && <span>{resultado} palabras clave encontradas</span>}
               </div>
-              <strong>{prospectos.length}</strong>
+              <button className="analyze-button" type="button" onClick={analizarMensajes}>
+                Analizar mensajes
+              </button>
             </div>
 
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Folio</th>
-                    <th>Cliente</th>
-                    <th>Contacto</th>
-                    <th>Canal</th>
-                    <th>Mensaje</th>
-                    <th>Responsable</th>
-                    <th>Actualizado</th>
-                    <th>Estado</th>
+                    {columnas.map((columna) => <th key={columna.field}>{columna.headerName}</th>)}
                   </tr>
                 </thead>
                 <tbody>
-                  {prospectos.map((prospecto) => (
+                  {datos.map((prospecto) => (
                     <tr key={prospecto.folio}>
-                      <td><code>{prospecto.folio}</code></td>
-                      <td className="field-name">{prospecto.cliente}</td>
-                      <td>{prospecto.telefono}</td>
-                      <td>{prospecto.canal}</td>
-                      <td className="message-cell" title={prospecto.mensaje}>{prospecto.mensaje}</td>
-                      <td>
-                        <span className="responsible">{prospecto.creadoPor.nombres}</span>
-                        <small>{prospecto.creadoPor.correo}</small>
-                      </td>
-                      <td>{formatearFecha(prospecto.actualizado)}</td>
-                      <td>
-                        <span className={`state ${prospecto.estadoLogico ? 'state-active' : 'state-inactive'}`}>
-                          {prospecto.estadoLogico ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
+                      {columnas.map((columna) => (
+                        <td key={columna.field} className={columna.className}>
+                          {columna.renderCell
+                            ? columna.renderCell({ value: prospecto[columna.field] })
+                            : prospecto[columna.field]}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </ContenedorVistaTabla>
+          </section>
 
           <footer className="data-source">
             <span>Fuente de datos</span>
             <code>src/assets/Data.json</code>
           </footer>
-        </ContenedorMediano>
+        </div>
       </main>
-    </LayoutGeneral>
+    </div>
   )
 }
 
