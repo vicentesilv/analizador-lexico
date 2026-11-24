@@ -3,14 +3,6 @@ import prospectos from './assets/Data.json'
 import { analizarProspectos } from './analizador'
 import './App.css'
 
-function formatearFecha(fecha) {
-  return new Intl.DateTimeFormat('es-MX', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date(fecha))
-}
-
 const columnas = [
   { field: 'folio', headerName: 'Folio', renderCell: ({ value }) => <code>{value}</code> },
   { field: 'cliente', headerName: 'Cliente', className: 'field-name' },
@@ -22,17 +14,6 @@ const columnas = [
     className: 'message-cell',
     renderCell: ({ value }) => <span title={value}>{value}</span>,
   },
-  {
-    field: 'creadoPor',
-    headerName: 'Responsable',
-    renderCell: ({ value }) => (
-      <>
-        <span className="responsible">{value.nombres}</span>
-        <small>{value.correo}</small>
-      </>
-    ),
-  },
-  { field: 'actualizado', headerName: 'Actualizado', renderCell: ({ value }) => formatearFecha(value) },
   {
     field: 'lead',
     headerName: 'Lead',
