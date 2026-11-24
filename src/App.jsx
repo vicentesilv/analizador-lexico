@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import prospectos from './assets/Data.json'
-import filtrosTexto from './assets/filtros.txt?raw'
+import { analizarProspectos } from './analizador'
 import './App.css'
 
 function formatearFecha(fecha) {
@@ -55,25 +55,8 @@ function App() {
   const [datos, setDatos] = useState(prospectos)
   const [resultado, setResultado] = useState(null)
 
-  const normalizar = (texto) => texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-
   const analizarMensajes = () => {
-    const palabrasClave = filtrosTexto
-      .split('\n')
-      .map((filtro) => normalizar(filtro.trim()))
-      .filter(Boolean)
-
-    let coincidencias = 0
-    const datosAnalizados = datos.map((prospecto) => {
-      const mensaje = normalizar(prospecto.mensaje || '')
-      const coincidenciasMensaje = palabrasClave.filter((palabra) => mensaje.includes(palabra)).length
-      coincidencias += coincidenciasMensaje
-      return { ...prospecto, lead: coincidenciasMensaje * 10 }
-    })
-
+    const { datos: datosAnalizados, coincidencias } = analizarProspectos(datos)
     setDatos(datosAnalizados)
     setResultado(coincidencias)
   }
