@@ -50,7 +50,6 @@ function App() {
             <div className="panel-header">
               <div className="title-group">
                 <h1>Prospectos</h1>
-                {resultado !== null && <span>{resultado} palabras clave encontradas</span>}
               </div>
               <button className="analyze-button" type="button" onClick={analizarMensajes}>
                 Analizar mensajes
@@ -81,10 +80,6 @@ function App() {
             </div>
           </section>
 
-          <footer className="data-source">
-            <span>Fuente de datos</span>
-            <code>src/assets/Data.json</code>
-          </footer>
         </div>
       </main>
     </div>

@@ -4,8 +4,8 @@ const PUNTOS_POR_COINCIDENCIA = 10
 
 function normalizar(texto) {
   return String(texto ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize('NFD') 
+    .replace(/[\u0300-\u036f]/g, '') 
     .toLowerCase()
 }
 
